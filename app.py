@@ -82,7 +82,10 @@ if question:
         cols = st.columns(3)
         for i, s in enumerate(clips):
             with cols[i % 3]:
-                st.video(agent.vss.stream_url(s["source"]))
+                try:
+                    st.video(agent.vss.clip_bytes(s["source"]))
+                except Exception as e:
+                    st.warning(f"Clip unavailable: {e}")
                 desc = re.sub(r"\s+", " ", s["description"])[:200]
                 where = " · ".join(x for x in (s.get("location"), s.get("camera")) if x)
                 st.caption(f"**{s['filename']}** @ {s['start']}-{s['end']}s · {where}\n\n{desc}")

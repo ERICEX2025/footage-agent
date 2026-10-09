@@ -74,6 +74,14 @@ class VSSClient:
             body["original_video"] = original_video
         return self._req("POST", "/agent/ask", json=body)
 
+    def clip_bytes(self, source):
+        """Fetch the clip server-side (the VSS host is only reachable inside the event network)."""
+        if not self.token:
+            self.login()
+        r = requests.get(f"{self.base}/videos/stream", params={"source": source, "token": self.token}, timeout=60)
+        r.raise_for_status()
+        return r.content
+
     def stream_url(self, source):
         """Backend-proxied stream URL usable directly in a <video> tag."""
         if not self.token:
