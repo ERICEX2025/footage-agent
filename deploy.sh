@@ -18,8 +18,9 @@ kubectl -n "$NS" create configmap "$APP-code" \
   --from-file=voice.py --from-file=requirements.txt \
   --dry-run=client -o yaml | kubectl apply -f -
 
+# Pods cannot resolve the public VSS hostname; use the in-cluster backend service.
 kubectl -n "$NS" create secret generic "$APP-env" \
-  --from-literal=INGRESS_URL="$(cfg INGRESS_URL)" \
+  --from-literal=INGRESS_URL="http://video-backend-service.$NS.svc:8000" \
   --from-literal=USERNAME="$USERNAME" \
   --from-literal=PASSWORD="$(cfg PASSWORD)" \
   --from-literal=GPU_BEARER_TOKEN="$(cfg GPU_BEARER_TOKEN)" \
