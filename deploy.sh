@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Deploy JARVIS to the team's K8s namespace behind Ingress path /app (workshop "View app" button).
+# Deploy JARVIS to the team's K8s namespace behind Ingress path /jarvis.
+# (/app belongs to the team's main demo app - don't touch it.)
 # Run inside the event VM:  ./deploy.sh
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -84,12 +85,11 @@ spec:
   - host: $APP_HOST
     http:
       paths:
-      - path: /app(/|$)(.*)
+      - path: /jarvis(/|$)(.*)
         pathType: ImplementationSpecific
         backend: {service: {name: $APP, port: {number: 80}}}
 EOF
 
 kubectl -n "$NS" rollout restart deploy/$APP
 kubectl -n "$NS" rollout status deploy/$APP --timeout=300s
-curl -sS -o /dev/null -w "app HTTP %{http_code}\n" "http://$APP_HOST/app/"
-echo "Open https://workshop.thecosmoslabs.com -> View app"
+curl -sS -o /dev/null -w "jarvis HTTP %{http_code}\n" "http://$APP_HOST/jarvis/"
