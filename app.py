@@ -15,8 +15,11 @@ st.set_page_config(page_title="JARVIS for your cameras", layout="wide")
 
 @st.cache_resource
 def get_agent():
-    if _wandb_project():
-        weave.init(_wandb_project())
+    try:  # tracing is nice-to-have; never block the app on it
+        if _wandb_project():
+            weave.init(_wandb_project())
+    except Exception as e:
+        print("weave.init failed:", e)
     return FootageAgent()
 
 

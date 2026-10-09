@@ -108,11 +108,10 @@ def _wandb_project():
 class FootageAgent:
     def __init__(self, vss=None, model=None):
         self.vss = vss or VSSClient()
-        self.model = model or os.environ.get("LLM_MODEL", "meta-llama/Llama-3.3-70B-Instruct")
+        self.model = model or os.environ.get("LLM_MODEL", "openai/gpt-oss-120b")
         self.llm = openai.OpenAI(
             base_url="https://api.inference.wandb.ai/v1",
             api_key=os.environ["WANDB_API_KEY"],
-            project=_wandb_project(),
         )
         self.evidence = {}  # source -> compact segment, for the UI to render clips
 

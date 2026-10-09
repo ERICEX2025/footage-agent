@@ -5,8 +5,7 @@ load_dotenv()
 
 try:
     import openai
-    llm = openai.OpenAI(base_url="https://api.inference.wandb.ai/v1", api_key=os.environ["WANDB_API_KEY"],
-                        project=os.environ.get("WANDB_PROJECT"))
+    llm = openai.OpenAI(base_url="https://api.inference.wandb.ai/v1", api_key=os.environ["WANDB_API_KEY"])
     print("W&B models:", [m.id for m in llm.models.list()])
 except Exception as e:
     print("W&B inference FAILED:", e)
