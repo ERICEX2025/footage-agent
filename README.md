@@ -1,10 +1,12 @@
-# Food Court Watch
+# JARVIS for your cameras
 
-Loss-prevention agent for small food businesses. Owners ask questions about their security footage ("did anyone walk out without paying?") and get answers grounded in timestamped, playable clips.
+Talk to hours of camera footage. Ask out loud ("Jarvis, show me a person close to a moving car") and get a spoken answer plus the matching clips.
 
 An LLM agent (W&B Inference, traced with Weave) plans multi-step investigations over the VAST VSS stack:
 
-| Tool | Backed by |
+| Step / tool | Backed by |
+|------|-----------|
+| Voice input | NVIDIA Canary-1B speech-to-text |
 |------|-----------|
 | `search_footage` | VAST VastDB hybrid vector search over NVIDIA Cosmos-Reason segment descriptions + Cosmos-Embed visual vectors |
 | `video_timeline` | Per-video segment rows in VastDB (before/after context) |
