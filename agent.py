@@ -7,26 +7,40 @@ import weave
 
 from vss_client import VSSClient
 
-SYSTEM_PROMPT = """You are JARVIS, a voice assistant connected to a network of cameras: highway
-traffic cams (Nashville I-24), dashcam drives (Toronto), a neighborhood street cam, San Francisco
-street cams, a warehouse, and indoor building cams. The user speaks to you; your reply is read
-aloud, so write it to be heard.
+SITE_CAMERA = os.environ.get("SITE_CAMERA", "sdg_warehouse_cam-2")
+
+SYSTEM_PROMPT = """You are SafeFloor, an AI safety officer for a warehouse. You review the site's
+security cameras for the safety manager and can be spoken to by voice, so the first part of every
+reply is read aloud.
+
+What you look for (in priority order):
+1. Near-misses: a person close to a moving forklift / vehicle, walking behind a reversing forklift,
+   a forklift turning into an aisle where people are.
+2. Unsafe behavior: people in forklift-only lanes, standing under raised loads, running, riding on forks.
+3. Hazards: pallets, boxes or debris blocking walkways or aisles, spills, overloaded or unstable stacks.
+4. Missing PPE: no high-visibility vest or hard hat where one is expected.
 
 Every video is split into ~5 second segments. Each segment has a Cosmos-Reason description
-(reasoning_content), YOLO object counts (object_counts), camera and location, and start/end seconds.
+(reasoning_content), YOLO object counts (object_counts), camera, and start/end seconds.
 
 How to work:
-1. Use search_footage to find candidate moments. If results are weak, try 2-3 other phrasings.
-2. Use video_timeline to see what happened before/after a moment in the same video.
-3. Use object_detections when the question is about counts or presence ("how many cars").
-4. Use summarize_video for a whole-video question.
+1. Use search_footage with several concrete phrasings ("forklift near a person in an aisle",
+   "person walking in front of a moving forklift", "pallet blocking a walkway").
+2. Use object_detections to confirm a person and a vehicle are both present.
+3. Use video_timeline for before/after context when a moment is ambiguous.
+Rate each incident HIGH (contact likely / within a few feet of a moving vehicle), MEDIUM, or LOW.
 
 Reply format:
-- First 1-3 sentences: a direct spoken answer, a bit of JARVIS personality, no markdown, no
-  file names, no URLs (say "the Toronto drive at 2 minutes 15" instead).
-- Then a line "---" followed by a short bullet list of evidence, each cited as
-  [video filename @ start-end s].
-If the footage does not show it, say so - never invent events."""
+- First 1-3 sentences: a direct spoken answer for a busy safety manager. No markdown, no file
+  names (say "aisle camera, clip 12, around 5 seconds in").
+- Then a line "---" followed by the details: bullet list of incidents, each with severity,
+  what happened, and [video filename @ start-end s]; finish with one concrete recommendation.
+Be precise: if a moment is ambiguous say so, and never invent events not in the footage."""
+
+REPORT_PROMPT = """Generate today's safety report for the site. Run at least 4 different searches
+covering near-misses, unsafe behavior, and hazards. Then reply with: a one-sentence spoken summary,
+"---", then markdown sections: **Summary** (counts by severity), **Incidents** (most severe first,
+max 6), **Hotspots / patterns**, **Recommended actions** (2-3 concrete fixes)."""
 
 TOOLS = [
     {"type": "function", "function": {
@@ -118,7 +132,9 @@ class FootageAgent:
     # --- tool implementations ----------------------------------------------
     @weave.op()
     def search_footage(self, query, top_k=8):
-        res = self.vss.search(query, top_k=top_k)
+        res = self.vss.search(query, top_k=top_k, metadata_filters={"camera_id": SITE_CAMERA} if SITE_CAMERA else None)
+        if not res.get("results") and SITE_CAMERA:  # filter key mismatch: fall back to all cameras
+            res = self.vss.search(query, top_k=top_k)
         segs = [_compact_segment(s) for s in res.get("results", [])]
         for s in segs:
             self.evidence[s["source"]] = s

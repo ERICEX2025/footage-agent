@@ -1,6 +1,10 @@
-# JARVIS for your cameras
+# SafeFloor
 
-Talk to hours of camera footage. Ask out loud ("Jarvis, show me a person close to a moving car") and get a spoken answer plus the matching clips.
+An AI safety officer for warehouses. It watches the cameras a site already has, finds near-misses between people and forklifts, blocked walkways and other hazards, and gives the safety manager a daily report with clips. Ask by voice ("any close calls in the aisles today?") and get a spoken answer plus the evidence.
+
+**Why:** forklift accidents injure ~35,000 US workers a year and a single serious injury costs a company $40k-150k+. Warehouses already record everything, but nobody watches the footage until after someone gets hurt.
+
+**Demo footage:** the event's pre-indexed warehouse corpus (`sdg_warehouse_cam-2`). Set `SITE_CAMERA` to point it at another camera.
 
 An LLM agent (W&B Inference, traced with Weave) plans multi-step investigations over the VAST VSS stack:
 
