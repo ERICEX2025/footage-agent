@@ -169,7 +169,11 @@ class FootageAgent:
             )
             msg = resp.choices[0].message
             if not msg.tool_calls:
-                return msg.content
+                if msg.content and msg.content.strip():
+                    return msg.content
+                # Empty final message (seen with gpt-oss after long tool chains): ask again.
+                messages.append({"role": "user", "content": "Now write your answer in the required format."})
+                continue
             messages.append(msg.model_dump(exclude_none=True))
             for call in msg.tool_calls:
                 args = json.loads(call.function.arguments or "{}")
@@ -181,4 +185,8 @@ class FootageAgent:
                     out = json.dumps({"error": str(e)})
                 messages.append({"role": "tool", "tool_call_id": call.id, "content": out})
         messages.append({"role": "user", "content": "Stop calling tools and give your best answer now."})
-        return self.llm.chat.completions.create(model=self.model, messages=messages).choices[0].message.content
+        for _ in range(2):
+            content = self.llm.chat.completions.create(model=self.model, messages=messages).choices[0].message.content
+            if content and content.strip():
+                return content
+        return "Sorry, I couldn't put together an answer this time. Please try again."
